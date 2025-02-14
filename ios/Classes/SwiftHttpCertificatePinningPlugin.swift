@@ -51,7 +51,7 @@ public class SwiftHttpCertificatePinningPlugin: NSObject, FlutterPlugin {
 
         let serverTrustManager = ServerTrustManager(
             evaluators: [
-                domain: CustomServerTrustEvaluator(allowedFingerprints: fingerprints)
+                "api.digital.ajmanbank.ae": CustomServerTrustEvaluator(allowedFingerprints: fingerprints)
             ]
         )
 
