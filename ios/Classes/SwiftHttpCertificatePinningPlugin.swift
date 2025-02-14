@@ -14,6 +14,10 @@ public class SwiftHttpCertificatePinningPlugin: NSObject, FlutterPlugin {
 
     private var allowedFingerprints: [String]?
 
+     static let sharedSession: Session = {
+        return Session(serverTrustManager: nil) // Default, will be configured per request
+    }()
+
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "http_certificate_pinning", binaryMessenger: registrar.messenger())
         let instance = SwiftHttpCertificatePinningPlugin()
@@ -51,8 +55,8 @@ public class SwiftHttpCertificatePinningPlugin: NSObject, FlutterPlugin {
             ]
         )
 
-        let session = Session(serverTrustManager: serverTrustManager)
-
+        let session = SwiftHttpCertificatePinningPlugin.sharedSession
+        session.sessionConfiguration.timeoutIntervalForRequest = 60
         session.request(urlString, method: .get, headers: HTTPHeaders(headers))
             .validate()
             .response { response in
