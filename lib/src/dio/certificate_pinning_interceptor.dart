@@ -15,9 +15,7 @@ class CertificatePinningInterceptor extends Interceptor {
     List<String>? allowedSHAFingerprints,
     int timeout = 0,
     this.callFollowingErrorInterceptor = false,
-  })  : _allowedSHAFingerprints = allowedSHAFingerprints != null
-            ? allowedSHAFingerprints
-            : <String>[],
+  })  : _allowedSHAFingerprints = allowedSHAFingerprints != null ? allowedSHAFingerprints : <String>[],
         _timeout = timeout;
 
   @override
@@ -52,7 +50,7 @@ class CertificatePinningInterceptor extends Interceptor {
         return super.onRequest(options, handler);
       } else {
         handler.reject(
-          DioException(
+          DioError(
             requestOptions: options,
             error: CertificateNotVerifiedException(),
           ),
@@ -68,7 +66,7 @@ class CertificatePinningInterceptor extends Interceptor {
       }
 
       handler.reject(
-        DioException(
+        DioError(
           requestOptions: options,
           error: error,
         ),
