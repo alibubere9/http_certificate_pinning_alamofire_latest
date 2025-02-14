@@ -83,7 +83,7 @@ class CustomServerTrustEvaluator: ServerTrustEvaluating {
 
         if !allowedFingerprints.contains(serverCertSha256) {
             throw AFError.serverTrustEvaluationFailed(
-                reason: .certificatePinningFailed(host: host, trust: trust, status: .denied)
+                reason: .certificatePinningFailed(host: host, trust: trust)
             )
         }
     }
