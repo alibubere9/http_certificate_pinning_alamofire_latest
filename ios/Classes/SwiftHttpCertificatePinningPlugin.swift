@@ -81,11 +81,16 @@ class CustomServerTrustEvaluator: ServerTrustEvaluating {
         let serverCertData = SecCertificateCopyData(serverCertificate) as Data
         let serverCertSha256 = serverCertData.sha256().toHexString()
 
-        if !allowedFingerprints.contains(serverCertSha256) {
+       if !allowedFingerprints.contains(serverCertSha256) {
             throw AFError.serverTrustEvaluationFailed(
-                reason: .certificatePinningFailed(host: host, trust: trust)
+                reason: .certificatePinningFailed(
+                    host: host,
+                    trust: trust,
+                    pinnedCertificates: [],
+                    serverCertificates: [serverCertificate]
+                )
             )
-        }
+       }
     }
 }
 
