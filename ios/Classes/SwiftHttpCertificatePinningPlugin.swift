@@ -12,9 +12,7 @@ import CommonCrypto
 //!NEW
 public class SwiftHttpCertificatePinningPlugin: NSObject, FlutterPlugin {
 
-    private var allowedFingerprints: [String]?
-
-     static let sharedSession: Session = {
+    static let sharedSession: Session = {
         return Session(serverTrustManager: nil) // Default, will be configured per request
     }()
 
@@ -47,16 +45,16 @@ public class SwiftHttpCertificatePinningPlugin: NSObject, FlutterPlugin {
             return
         }
 
-        self.allowedFingerprints = fingerprints
-
         let serverTrustManager = ServerTrustManager(
             evaluators: [
-                "api.digital.ajmanbank.ae": CustomServerTrustEvaluator(allowedFingerprints: fingerprints)
+                domain: FingerprintTrustEvaluator(allowedFingerprints: fingerprints)
             ]
         )
 
-        let session = SwiftHttpCertificatePinningPlugin.sharedSession
-        session.sessionConfiguration.timeoutIntervalForRequest = 60
+        let session = SwiftHttpCertificatePinningPlugin.sharedSession // Use singleton
+
+        session.sessionConfiguration.timeoutIntervalForRequest = 60  // Set timeout
+
         session.request(urlString, method: .get, headers: HTTPHeaders(headers))
             .validate()
             .response { response in
@@ -70,11 +68,12 @@ public class SwiftHttpCertificatePinningPlugin: NSObject, FlutterPlugin {
     }
 }
 
-class CustomServerTrustEvaluator: ServerTrustEvaluating {
+class FingerprintTrustEvaluator: ServerTrustEvaluating {
     private let allowedFingerprints: [String]
 
     init(allowedFingerprints: [String]) {
-        self.allowedFingerprints = allowedFingerprints
+        // Normalize stored fingerprints (remove colons, make lowercase)
+        self.allowedFingerprints = allowedFingerprints.map { $0.replacingOccurrences(of: ":", with: "").lowercased() }
     }
 
     func evaluate(_ trust: SecTrust, forHost host: String) throws {
@@ -83,9 +82,9 @@ class CustomServerTrustEvaluator: ServerTrustEvaluating {
         }
 
         let serverCertData = SecCertificateCopyData(serverCertificate) as Data
-        let serverCertSha256 = serverCertData.sha256().toHexString()
+        let serverCertSha256 = serverCertData.sha256().toHexString().lowercased()  // Convert to lowercase for matching
 
-       if !allowedFingerprints.contains(serverCertSha256) {
+        if !allowedFingerprints.contains(serverCertSha256) {
             throw AFError.serverTrustEvaluationFailed(
                 reason: .certificatePinningFailed(
                     host: host,
@@ -94,10 +93,9 @@ class CustomServerTrustEvaluator: ServerTrustEvaluating {
                     serverCertificates: [serverCertificate]
                 )
             )
-       }
+        }
     }
 }
-
 extension Data {
     func sha256() -> Data {
         var digest = [UInt8](repeating: 0, count: Int(CC_SHA256_DIGEST_LENGTH))
